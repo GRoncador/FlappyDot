@@ -1,1 +1,1 @@
-# FlappyDot
+# Flappy Pixel
