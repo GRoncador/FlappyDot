@@ -1,6 +1,7 @@
 * {
     block-size: border-box;
     font-family: 'VT323', monospace;
+    touch-action: manipulation;
 }
 
 body {
