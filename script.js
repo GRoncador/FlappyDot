@@ -169,7 +169,7 @@ function endGame() {
 
     ctx.textAlign = "center";
     ctx.font = "40px 'VT323', monospace";
-    ctx.fillText("click to play again", canvas.width/2, canvas.height*3/4);
+    ctx.fillText("🖱️ click to play again", canvas.width/2, canvas.height*3/4);
 
     if (score.value > score.best) {
 
@@ -212,7 +212,7 @@ function gameLoop() {
 
 ctx.textAlign = "center";
 ctx.font = "80px 'VT323', monospace";
-ctx.fillText("click to jump ⇡", canvas.width/2, canvas.height/2);
+ctx.fillText("🖱️ click to jump ⇡", canvas.width/2, canvas.height/2);
 
 canvas.addEventListener('mousedown', function(event) {
 
