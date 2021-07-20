@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "flappy-pixel-grb",
     "public": "public",
     "ignore": [
       "firebase.json",
