@@ -29,7 +29,8 @@ var dot = {
     yPosition : 50,
     width : 30,
     height : 30,
-    fillStyle : "black",
+    fillStyle : '#ffd000',
+
 
     // animation
     yAcceleration : 0.25,
@@ -59,6 +60,7 @@ var dot = {
 
         ctx.fillStyle = this.fillStyle;
         ctx.fillRect(this.xPosition, this.yPosition, this.width, this.height);
+        ctx.strokeRect(this.xPosition, this.yPosition, this.width, this.height);
 
     },
 
@@ -76,7 +78,7 @@ var obstacles = {
     space : 200,
     frequency : 400,
     distance : 0,
-    fillStyle : 'black',
+    fillStyle : '#71BF2E',
 
     pairs : [],
 
@@ -105,9 +107,11 @@ var obstacles = {
             
             ctx.fillStyle = this.fillStyle;
             ctx.fillRect(this.pairs[obst].x, (this.pairs[obst].y - this.height), this.width, this.height);
+            ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y - this.height), this.width, this.height);
 
             ctx.fillStyle = this.fillStyle;
             ctx.fillRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
+            ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
 
             this.pairs[obst].x -= dot.xSpeed;
 
