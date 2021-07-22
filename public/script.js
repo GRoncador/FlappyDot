@@ -1,23 +1,117 @@
-//update
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
+var db = firebase.database();
 
-var score = {
+var game = {
 
-    value : 0,
-    best : 0,
+    score : 0,
+    lowestHighScore : 0,
     level : 0,
     levelChange : 500,
+    highScoresDB : [],
+    namesDB : [],
+    currentScreen : 'initial',
+    fpsTimeStamp : 0,
+    fpsCount: 0,
+
+    fpsCalculate() {
+
+        if (Date.now() - game.fpsTimeStamp >= 5000) {
+
+            game.fpsTimeStamp = Date.now();
+
+            document.getElementById('fps').innerText = `FPS: ${game.fpsCount/5}`;
+
+            game.fpsCount = 0;
+
+        } else {
+
+            game.fpsCount ++
+
+        }
+
+    },
 
     updateScore() {
 
-        document.getElementById('score').innerText = `Score: ${this.value}`;
+        document.getElementById('score').innerText = `Score: ${this.score}`;
 
-        document.getElementById('best-score').innerText = `High Score: ${this.best}`;
+        game.level = parseInt(game.score / game.levelChange);
 
-        this.level = parseInt(this.value / this.levelChange);
+    },
 
-    }
+    getHighScores() {
+
+        let rawNamesDB = [];
+        let rawHighScoresDB = [];
+
+        db.ref('names').get().then((snapshot) => {
+
+            rawNamesDB = Object.entries(snapshot.val());
+
+        }).catch((error) => {console.error(error)})
+        
+        db.ref('highScores').get().then((snapshot) => {
+            
+            rawHighScoresDB = Object.entries(snapshot.val());
+            
+            game.highScoresDB = rawHighScoresDB.sort( (a,b) => a[1] - b[1] ).slice(-10)
+
+            game.lowestHighScore = game.highScoresDB[0][1];
+            
+            game.highScoresDB.forEach( function(scoreData,index) {
+                
+                for (i in rawNamesDB) {
+
+                    if (rawNamesDB[i][0] == scoreData[0]) {
+
+                        game.highScoresDB[index][0] = rawNamesDB[i][1];
+                        
+                        break;
+
+                    }
+                    
+                }
+
+                game.highScoresDB[index][1] = "0".repeat(6 - game.highScoresDB[index][1].toString().length) + game.highScoresDB[index][1].toString();
+                
+            })
+
+            game.highScoresDB.reverse();
+    
+            game.showHighScores();
+            
+        }).catch((error) => {console.error(error)})
+    
+    },
+    
+    showHighScores() {
+    
+        for (i in game.highScoresDB) {
+    
+            document.getElementById('li-' + i).innerText = game.highScoresDB[i][1] + '....' + game.highScoresDB[i][0];
+    
+        }
+    
+    },
+    
+    sendHighScore() {
+
+        let keyID = db.ref().push().key;
+        let scoreObj = {};
+        let playerObj = {};
+
+        scoreObj[keyID] = game.score;
+        playerObj[keyID] = document.getElementById('score-name-input').value.toUpperCase();
+        
+        firebase.database().ref('highScores').update(scoreObj);
+        firebase.database().ref('names').update(playerObj);
+
+        drawScreen.highScoreSent()
+
+        game.getHighScores()
+        
+    },
 
 }
 
@@ -35,13 +129,11 @@ var dot = {
     // animation
     yAcceleration : 0.25,
     ySpeed : 0,
-    xAcceleration : 1 / score.levelChange,
+    xAcceleration : 1 / game.levelChange,
     xStartSpeed : 2,
     xSpeed : 0,
 
     moveDot() {
-
-        //ctx.clearRect(this.xPosition, 0, this.width, canvas.height);
 
         this.ySpeed += this.yAcceleration
         this.yPosition += this.ySpeed
@@ -60,6 +152,7 @@ var dot = {
 
         ctx.fillStyle = this.fillStyle;
         ctx.fillRect(this.xPosition, this.yPosition, this.width, this.height);
+        ctx.strokeStyle = 'black'
         ctx.strokeRect(this.xPosition, this.yPosition, this.width, this.height);
 
     },
@@ -100,17 +193,16 @@ var obstacles = {
 
         }
 
-
-        
-
         for (var obst in this.pairs) {
             
             ctx.fillStyle = this.fillStyle;
             ctx.fillRect(this.pairs[obst].x, (this.pairs[obst].y - this.height), this.width, this.height);
+            ctx.strokeStyle = 'black'
             ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y - this.height), this.width, this.height);
 
             ctx.fillStyle = this.fillStyle;
             ctx.fillRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
+            ctx.strokeStyle = 'black'
             ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
 
             this.pairs[obst].x -= dot.xSpeed;
@@ -119,7 +211,197 @@ var obstacles = {
 
         this.distance = this.distance + dot.xSpeed;
 
-        dot.xSpeed += dot.xAcceleration;
+        if (game.level < 8) {
+            dot.xSpeed += dot.xAcceleration;
+        }
+
+
+    },
+
+}
+
+var drawScreen = {
+
+    initial() {
+
+        game.currentScreen = 'initial'
+
+        // white background
+            ctx.fillStyle = '#ffffffb5'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        // yellow button - 'Play Solo'
+            ctx.fillStyle = '#ffd000'    
+            ctx.fillRect(150, 195, 230, 50)
+
+            ctx.strokeStyle = '#b48912'
+            ctx.strokeRect(150, 195, 230, 50)
+
+        // grey button - 'Multiplayer'
+            ctx.fillStyle = '#c7c7c7'
+            ctx.fillRect(420,195, 230, 50)
+
+            ctx.strokeStyle = '#313131'
+            ctx.strokeRect(420, 195, 230, 50)
+
+        // red button - 'START'
+            ctx.fillStyle = '#ff6161'
+            ctx.fillRect(323, 395, 150, 50)
+
+            ctx.strokeStyle = '#af2323'
+            ctx.strokeRect(323, 395, 150, 50)
+        
+        // text '(coming soon)'
+            ctx.textAlign = "center";
+            ctx.fillStyle = '#313131'
+            ctx.font = "20px 'VT323', monospace";
+            ctx.fillText("(coming soon)", canvas.width*2/3, 265);
+
+        // text 'Flappy Pixel'
+            ctx.fillStyle = 'black'
+            ctx.textAlign = "center";
+            ctx.font = "80px 'VT323', monospace";
+            ctx.fillText("Flappy Pixel", canvas.width/2, 100);
+
+        // text 'Solo'
+            ctx.font = "40px 'VT323', monospace";
+            ctx.fillText("Solo", canvas.width/3, 230);
+
+        // text 'START'
+            ctx.fillStyle = 'black'
+            ctx.fillText("START", canvas.width/2, 430);
+
+        // text 'Multiplayer'
+            ctx.fillStyle = '#8d8d8d'
+            ctx.fillText("Multiplayer", canvas.width*2/3, 230);    
+    },
+
+    instructions() {
+
+        if (game.currentScreen == 'game' && game.score <= 100) {
+
+            ctx.textAlign = "center";
+            ctx.fillStyle = 'black'
+            ctx.font = "50px 'VT323', monospace";
+            ctx.fillText("1 - Click to jump 🖱️ ⇡", canvas.width/2, canvas.height/2);
+
+        } else if (game.currentScreen == 'game' && game.score <= 300) {
+
+            ctx.textAlign = "center";
+            ctx.fillStyle = 'black'
+            ctx.font = "50px 'VT323', monospace";
+            ctx.fillText("2 - Avoid the ground and obstacles", canvas.width/2, canvas.height/2);
+
+        }
+    },
+
+    gameOver() {
+
+        game.currentScreen = 'game over'
+
+        // white background
+            ctx.fillStyle = '#ffffffb5'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        // text 'GAME OVER'    
+            ctx.fillStyle = 'black'    
+            ctx.textAlign = "center";
+            ctx.font = "100px 'VT323', monospace";
+            ctx.fillText("GAME OVER", canvas.width/2, 100);
+
+        // text 'your score........XXX'
+            ctx.fillStyle = 'black'    
+            ctx.textAlign = "center";
+            ctx.font = "40px 'VT323', monospace";
+            ctx.fillText(`Your score is ......... ${game.score}`, canvas.width/2, 170);
+
+        // red button - 'PLAY AGAIN'
+            ctx.fillStyle = '#ff6161'
+            ctx.fillRect(300, 395, 200, 50)
+
+            ctx.strokeStyle = '#af2323'
+            ctx.strokeRect(300, 395, 200, 50)
+
+        // text 'PLAY AGAIN'
+            ctx.fillStyle = 'black'
+            ctx.fillText("PLAY AGAIN", canvas.width/2, 430);
+
+        // grey button - 'MENU'
+            ctx.fillStyle = '#9a9a9a'
+            ctx.fillRect(600, 395, 100, 50)
+
+            ctx.strokeStyle = 'black'
+            ctx.strokeRect(600, 395, 100, 50)
+
+        // text 'MENU'
+            ctx.fillStyle = 'black'
+            ctx.fillText("MENU", 650, 430);
+
+    },
+
+    highScoreGameOver() {
+
+        game.currentScreen = 'game over - high score'
+
+        // yellow box
+            ctx.fillStyle = '#ffd000'    
+            ctx.fillRect(100, 205, 600, 150)
+
+            ctx.strokelStyle = 'black'    
+            ctx.strokeRect(100, 205, 600, 150)
+
+        // text 'New High Score!'
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = "40px 'VT323', monospace";
+            ctx.fillText("New High Score!", canvas.width/2, 245);
+
+        // text 'Enter your name:'
+            ctx.fillStyle = 'black'    
+            ctx.font = "25px 'VT323', monospace";
+            ctx.fillText('Enter your name:', 195, 307);
+
+        // grey button 'Send Score'
+            ctx.fillStyle = '#9a9a9a'
+            ctx.fillRect(525, 285, 150, 33)
+
+            ctx.strokeStyle = 'black'
+            ctx.strokeRect(525, 285, 150, 33)
+
+        // text 'Send Score'
+            ctx.textAlign = "left";
+            ctx.fillStyle = 'black'    
+            ctx.font = "25px 'VT323', monospace";
+            ctx.fillText('Send Score', 550, 307);
+
+        // name input
+            document.getElementById('score-name-input').style.setProperty('display','block');
+    },
+
+    highScoreSent() {
+
+        game.currentScreen = 'game over'
+        
+        // yellow box
+            ctx.fillStyle = '#ffd000'    
+            ctx.fillRect(100, 205, 600, 150)
+
+            ctx.strokelStyle = 'black'    
+            ctx.strokeRect(100, 205, 600, 150)
+
+        // text 'New High Score!'
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = "40px 'VT323', monospace";
+            ctx.fillText("New High Score!", canvas.width/2, 245);
+
+        // text 'Welcome to the Hall of Fame :)'
+            ctx.fillStyle = 'black'
+            ctx.textAlign = "center";    
+            ctx.font = "25px 'VT323', monospace";
+            ctx.fillText('Welcome to the Hall of Fame :)', canvas.width/2, 307);
+
+        document.getElementById('score-name-input').style.setProperty('display','none');
 
     },
 
@@ -134,11 +416,18 @@ function gameStart() {
     obstacles.pairs = [];
     obstacles.distance = obstacles.frequency;
 
+    game.currentScreen = 'game'
+    game.score = 0;
+    game.fpsValue = 0;
+    game.fpsTimeStamp = Date.now();
+
+    document.getElementById('score-name-input').style.setProperty('display','none');
+
     gameLoop();
 
 }
 
-function gameOver() {
+function isGameOver() {
 
     // hit ground
     if (dot.yPosition + dot.height >= canvas.height) {
@@ -161,79 +450,112 @@ function gameOver() {
 
 };
 
-function endGame() {
-
-    ctx.fillStyle = '#ffffffb5'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    ctx.fillStyle = 'black'
-
-    ctx.textAlign = "center";
-    ctx.font = "100px 'VT323', monospace";
-    ctx.fillText("GAME OVER!", canvas.width/2, canvas.height/2);
-
-    ctx.textAlign = "center";
-    ctx.font = "40px 'VT323', monospace";
-    ctx.fillText("🖱️ click to play again", canvas.width/2, canvas.height*3/4);
-
-    if (score.value > score.best) {
-
-        ctx.fillStyle = "red";
-        ctx.textAlign = "center";
-        ctx.font = "40px 'VT323', monospace";
-        ctx.fillText("new high score!", canvas.width/2, canvas.height/4);
-        score.best = score.value;
-
-    }
-
-    score.updateScore();
-    score.value = 0;
-
-}
-
 function gameLoop() {
 
-    if (!gameOver()) {
+    if (!isGameOver()) {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+        
         dot.moveDot();
-
+        
         obstacles.moveObstacles();
+        
+        drawScreen.instructions();
 
-        score.value ++;
+        game.score ++;
 
-        score.updateScore();
+        game.updateScore();
+
+        game.fpsCalculate();
 
         requestAnimationFrame(gameLoop);
 
     } else {
 
-        endGame();
-        
+        drawScreen.gameOver()
+
+        if (game.score > game.lowestHighScore || game.highScoresDB.length < 10) {
+    
+            drawScreen.highScoreGameOver()
+    
+        }
+    
+        game.updateScore();
+            
     }
 
 };
-
-ctx.textAlign = "center";
-ctx.font = "80px 'VT323', monospace";
-ctx.fillText("🖱️ click to jump ⇡", canvas.width/2, canvas.height/2);
 
 canvas.addEventListener('mousedown', function(event) {
 
     if (event.button == 0){
 
-        if (score.value == 0) {
+        let x = event.x - canvas.getBoundingClientRect().x;
+        let y = event.y - canvas.getBoundingClientRect().y;
 
-            gameStart();
+        if (game.currentScreen == 'initial') {
 
-        } else {
+            if (x >= 323 && x <= 473 && y >= 395 && y <= 445) {
+                
+                gameStart();
+
+            }
+
+        } else if (game.currentScreen == 'game') {
 
             dot.jump()
             
+        } else if (game.currentScreen == 'game over') {
+
+            if (x >= 300 && x <= 500 && y >= 395 && y <= 445) {
+                
+                gameStart();
+
+            } else if (x >= 600 && x <= 700 && y >= 395 && y <= 445) {
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                document.getElementById('score-name-input').style.setProperty('display','none');
+
+                drawScreen.initial();
+            }
+
+        } else if (game.currentScreen == 'game over - high score') {
+
+            if (x >= 300 && x <= 500 && y >= 395 && y <= 445) {
+                
+                gameStart();
+
+            }  else if (x >= 600 && x <= 700 && y >= 395 && y <= 445) {
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                document.getElementById('score-name-input').style.setProperty('display','none');
+
+                drawScreen.initial();
+
+            } else if (x >= 525 && x <= 675 && y >= 285 && y <= 318) {
+                
+                if (document.getElementById('score-name-input').value == '') {
+
+                    ctx.textAlign = "center";
+                    ctx.fillStyle = 'red'    
+                    ctx.font = "bold 25px 'VT323', monospace";
+                    ctx.fillText('Enter your name:', 195, 307);
+
+                } else {
+
+                    game.sendHighScore();
+
+                }
+
+            }
+
         }
 
     }
 
 });
 
+game.getHighScores();
+drawScreen.initial();

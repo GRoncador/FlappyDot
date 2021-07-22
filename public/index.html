@@ -20,32 +20,66 @@
     <div id="score-display">
         
         <p id="score">Score: 0</p>
-        
-        <p id="best-score">High Score: 0</p>
-    
+        <p id="fps">FPS: 0</p>
+            
     </div>
 
-    <div></div>
+    <div class="page-content">
 
-    <canvas id="canvas" width='800' height='500'></canvas>
+        <div>
+            <canvas id="canvas" width='800' height='500'></canvas>
+            <input id='score-name-input' type='text' maxlength="10">
+        </div>
+
+        <div id="high-scores">
+            <h2 class="high-scores-header">High Scores</h2>
+            <ol id="high-scores-list" class="high-scores-list">
+                <li id="li-0"></li>
+                <li id="li-1"></li>
+                <li id="li-2"></li>
+                <li id="li-3"></li>
+                <li id="li-4"></li>
+                <li id="li-5"></li>
+                <li id="li-6"></li>
+                <li id="li-7"></li>
+                <li id="li-8"></li>
+                <li id="li-9"></li>
+            </ol>
+        </div>
+
+    </div>
 
     <!-- The core Firebase JS SDK is always required and must be listed first -->
-    <script src="/__/firebase/8.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.7.1/firebase-app.js"></script>
 
     <!-- TODO: Add SDKs for Firebase products that you want to use
         https://firebase.google.com/docs/web/setup#available-libraries -->
+    
+    <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-database.js"></script>
 
-    <!-- Initialize Firebase -->
-    <script src="/__/firebase/init.js"></script>
+    <script>
+    // Your web app's Firebase configuration
+    var firebaseConfig = {
+        apiKey: "AIzaSyBY8Kz25DCffEi1IY4O_mv0JBOaaCt5-EA",
+        authDomain: "flappy-pixel-grb.firebaseapp.com",
+        databaseURL: "https://flappy-pixel-grb-default-rtdb.firebaseio.com",
+        projectId: "flappy-pixel-grb",
+        storageBucket: "flappy-pixel-grb.appspot.com",
+        messagingSenderId: "729897463205",
+        appId: "1:729897463205:web:dadbd8ac22589f2efe8c4c"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    </script>
 
 </body>
 
-<script src="script.js"></script>
-
 <footer>
-
+    
     <p>Developed by: Gustavo Roncador Borges</p>
-
+    
 </footer>
+
+<script src="script.js"></script>
 
 </html>
