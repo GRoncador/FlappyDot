@@ -4,13 +4,20 @@ var db = firebase.database();
 
 var game = {
 
+    gameMode : 'solo',
+    currentScreen : 'initial',
+
     score : 0,
-    lowestHighScore : 0,
     level : 0,
     levelChange : 500,
+    xAcceleration : 1 / 500,
+    xStartSpeed : 2,
+    xSpeed : 0,
+
     highScoresDB : [],
     namesDB : [],
-    currentScreen : 'initial',
+    lowestHighScore : 0,
+
     fpsTimeStamp : 0,
     fpsCount: 0,
 
@@ -115,7 +122,7 @@ var game = {
 
 }
 
-var dot = {
+var playerDot = {
 
     // style
     xPosition : 50,
@@ -125,13 +132,9 @@ var dot = {
     height : 30,
     fillStyle : '#ffd000',
 
-
     // animation
     yAcceleration : 0.25,
     ySpeed : 0,
-    xAcceleration : 1 / game.levelChange,
-    xStartSpeed : 2,
-    xSpeed : 0,
 
     moveDot() {
 
@@ -205,14 +208,14 @@ var obstacles = {
             ctx.strokeStyle = 'black'
             ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
 
-            this.pairs[obst].x -= dot.xSpeed;
+            this.pairs[obst].x -= game.xSpeed;
 
         }
 
-        this.distance = this.distance + dot.xSpeed;
+        this.distance = this.distance + game.xSpeed;
 
         if (game.level < 8) {
-            dot.xSpeed += dot.xAcceleration;
+            game.xSpeed += game.xAcceleration;
         }
 
 
@@ -409,9 +412,9 @@ var drawScreen = {
 
 function gameStart() {
 
-    dot.yPosition = dot.yStartPosition;
-    dot.ySpeed = 0;
-    dot.xSpeed = dot.xStartSpeed;
+    playerDot.yPosition = playerDot.yStartPosition;
+    playerDot.ySpeed = 0;
+    game.xSpeed = game.xStartSpeed;
 
     obstacles.pairs = [];
     obstacles.distance = obstacles.frequency;
@@ -427,36 +430,13 @@ function gameStart() {
 
 }
 
-function isGameOver() {
-
-    // hit ground
-    if (dot.yPosition + dot.height >= canvas.height) {
-
-       return true;
-        
-    // hit obstacle
-    } else if (obstacles.pairs.length > 0 && obstacles.pairs[0].x <= dot.xPosition + dot.width && obstacles.pairs[0].x + obstacles.width >= dot.xPosition) {
-
-        if (dot.yPosition <= obstacles.pairs[0].y || dot.yPosition + dot.height >= obstacles.pairs[0].y + obstacles.space){
-
-            return true;
-
-        }      
-
-    }
-
-    // hit nothing
-    return false;
-
-};
-
 function gameLoop() {
 
     if (!isGameOver()) {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        dot.moveDot();
+        playerDot.moveDot();
         
         obstacles.moveObstacles();
         
@@ -486,6 +466,29 @@ function gameLoop() {
 
 };
 
+function isGameOver() {
+
+    // hit ground
+    if (playerDot.yPosition + playerDot.height >= canvas.height) {
+
+       return true;
+        
+    // hit obstacle
+    } else if (obstacles.pairs.length > 0 && obstacles.pairs[0].x <= playerDot.xPosition + playerDot.width && obstacles.pairs[0].x + obstacles.width >= playerDot.xPosition) {
+
+        if (playerDot.yPosition <= obstacles.pairs[0].y || playerDot.yPosition + playerDot.height >= obstacles.pairs[0].y + obstacles.space){
+
+            return true;
+
+        }      
+
+    }
+
+    // hit nothing
+    return false;
+
+};
+
 canvas.addEventListener('mousedown', function(event) {
 
     if (event.button == 0){
@@ -503,7 +506,7 @@ canvas.addEventListener('mousedown', function(event) {
 
         } else if (game.currentScreen == 'game') {
 
-            dot.jump()
+            playerDot.jump()
             
         } else if (game.currentScreen == 'game over') {
 
