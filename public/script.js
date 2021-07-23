@@ -167,6 +167,51 @@ var playerDot = {
     }
 };
 
+var computerDot = {
+
+    // style
+    xPosition : 50,
+    yStartPosition : 50,
+    yPosition : 50,
+    width : 30,
+    height : 30,
+    fillStyle : '#ff6161',
+
+    // animation
+    yAcceleration : 0.25,
+    ySpeed : 0,
+
+    moveDot() {
+
+        this.ySpeed += this.yAcceleration
+        this.yPosition += this.ySpeed
+
+        // Limits the 'yPosition' to canvas size
+
+        if (this.yPosition + this.height >= canvas.height) {
+            
+            this.yPosition = canvas.height - this.height;
+        
+        } else if (this.yPosition < 0) {
+
+            this.yPosition = 0;
+
+        }
+
+        ctx.fillStyle = this.fillStyle;
+        ctx.fillRect(this.xPosition, this.yPosition, this.width, this.height);
+        ctx.strokeStyle = 'black'
+        ctx.strokeRect(this.xPosition, this.yPosition, this.width, this.height);
+
+    },
+
+    jump() {
+
+        this.ySpeed = -5;
+
+    }
+};
+
 var obstacles = {
 
     height : canvas.height,
@@ -414,13 +459,16 @@ function gameStart() {
 
     playerDot.yPosition = playerDot.yStartPosition;
     playerDot.ySpeed = 0;
-    game.xSpeed = game.xStartSpeed;
 
+    computerDot.yPosition = computerDot.yStartPosition;
+    computerDot.ySpeed = 0;
+    
     obstacles.pairs = [];
     obstacles.distance = obstacles.frequency;
-
-    game.currentScreen = 'game'
+    
+    game.currentScreen = 'game';
     game.score = 0;
+    game.xSpeed = game.xStartSpeed;
     game.fpsValue = 0;
     game.fpsTimeStamp = Date.now();
 
@@ -435,6 +483,8 @@ function gameLoop() {
     if (!isGameOver()) {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        computerDot.moveDot();
         
         playerDot.moveDot();
         
