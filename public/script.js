@@ -4,13 +4,13 @@ var db = firebase.database();
 
 var game = {
 
-    gameMode : 'solo',
+    mode : 'solo',
     currentScreen : 'initial',
 
     score : 0,
-    xAcceleration : 0.0015,
+    xAcceleration : 0.001,
     xStartSpeed : 2,
-    xMaxSpeed : 8,
+    xMaxSpeed : 7,
     xSpeed : 0,
 
     highScoresDB : [],
@@ -213,8 +213,12 @@ var computerDot = {
             if (Date.now() - this.lastClickTimeStamp >= 1000 / this.clicksPerSecond) {
                 
                 this.jump();
-                
-                //playerDot.jump();
+
+                if (game.mode == 'computer') {
+                    
+                    playerDot.jump();
+
+                }
                 
                 this.lastClickTimeStamp = Date.now();
                 
@@ -412,9 +416,9 @@ var drawScreen = {
             ctx.fillStyle = 'black'
             ctx.fillText("START", canvas.width/2, 430);
 
-        // text 'Multiplayer'
+        // text 'Computer'
             ctx.fillStyle = '#8d8d8d'
-            ctx.fillText("Multiplayer", canvas.width*2/3, 230);    
+            ctx.fillText("Computer", canvas.width*2/3, 230);    
     },
 
     instructions() {
@@ -553,11 +557,15 @@ function gameStart() {
     playerDot.yPosition = playerDot.yStartPosition;
     playerDot.ySpeed = -6.25;
 
-    computerDot.yPosition = computerDot.yStartPosition;
-    computerDot.ySpeed = -6.25;
-    computerDot.lastClickTimeStamp = 0;
-    computerDot.isDead = false;
-    computerDot.score = 0;
+    if (game.mode == 'computer') {
+        
+        computerDot.yPosition = computerDot.yStartPosition;
+        computerDot.ySpeed = -6.25;
+        computerDot.lastClickTimeStamp = 0;
+        computerDot.isDead = false;
+        computerDot.score = 0;
+
+    }
     
     obstacle.pairs = [];
     obstacle.distance = obstacle.frequency;
@@ -584,7 +592,7 @@ function gameLoop() {
         
         obstacle.moveObstacles();
 
-        if (!computerDot.isDead) {
+        if (game.mode == 'computer' && !computerDot.isDead) {
             
             computerDot.think();
             computerDot.moveDot();
@@ -659,6 +667,14 @@ canvas.addEventListener('mousedown', function(event) {
         if (game.currentScreen == 'initial') {
 
             if (x >= 323 && x <= 473 && y >= 395 && y <= 445) {
+
+                game.mode = 'solo'
+                
+                gameStart();
+
+            } else if (x >= 420 && x <= 650 && y >= 195 && y <= 245) {
+
+                game.mode = 'computer'
                 
                 gameStart();
 
@@ -666,8 +682,17 @@ canvas.addEventListener('mousedown', function(event) {
 
         } else if (game.currentScreen == 'game') {
 
-            playerDot.jump()
-            
+            if (game.mode == 'solo') {
+
+                playerDot.jump()
+
+            } else {
+
+                playerDot.yPosition = 500;
+                computerDot.yPosition = 500;
+                
+            }
+    
         } else if (game.currentScreen == 'game over') {
 
             if (x >= 300 && x <= 500 && y >= 395 && y <= 445) {
