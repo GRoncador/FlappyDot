@@ -4,13 +4,19 @@ var db = firebase.database();
 
 var game = {
 
+    mode : 'solo',
+    currentScreen : 'initial',
+
     score : 0,
-    lowestHighScore : 0,
-    level : 0,
-    levelChange : 500,
+    xAcceleration : 0.001,
+    xStartSpeed : 2,
+    xMaxSpeed : 7,
+    xSpeed : 0,
+
     highScoresDB : [],
     namesDB : [],
-    currentScreen : 'initial',
+    lowestHighScore : 0,
+
     fpsTimeStamp : 0,
     fpsCount: 0,
 
@@ -35,8 +41,6 @@ var game = {
     updateScore() {
 
         document.getElementById('score').innerText = `Score: ${this.score}`;
-
-        game.level = parseInt(game.score / game.levelChange);
 
     },
 
@@ -115,23 +119,19 @@ var game = {
 
 }
 
-var dot = {
+var playerDot = {
 
     // style
     xPosition : 50,
-    yStartPosition : 50,
+    yStartPosition : 150,
     yPosition : 50,
     width : 30,
     height : 30,
     fillStyle : '#ffd000',
 
-
     // animation
     yAcceleration : 0.25,
     ySpeed : 0,
-    xAcceleration : 1 / game.levelChange,
-    xStartSpeed : 2,
-    xSpeed : 0,
 
     moveDot() {
 
@@ -159,12 +159,130 @@ var dot = {
 
     jump() {
 
-        this.ySpeed = -5;
+        this.ySpeed = -6.25;
 
     }
 };
 
-var obstacles = {
+var computerDot = {
+
+    // style
+    xPosition : 50,
+    yStartPosition : 150,
+    yPosition : 50,
+    width : 30,
+    height : 30,
+    fillStyle : '#00000030',
+
+    // animation
+    yAcceleration : 0.25,
+    ySpeed : 0,
+
+    // ability
+    clicksPerSecond : 5,
+    lastClickTimeStamp : 0,
+
+    isDead : false,
+    score : 0,
+
+
+    think() {
+        
+        if (obstacle.pairs[0].x + obstacle.width - game.xSpeed > computerDot.xPosition) {
+            
+            var nextObstacleIndex = 0;
+            
+        } else {
+            
+            var nextObstacleIndex = 1;
+        
+        }
+
+            if (obstacle.pairs[nextObstacleIndex+1].y < obstacle.pairs[nextObstacleIndex].y) {
+
+                var maxHeigh = 16 + 75; // jump heigh = 75px
+
+            } else {
+
+                var maxHeigh = obstacle.space - computerDot.height - 16;
+
+            }
+        
+        if (computerDot.yPosition - obstacle.pairs[nextObstacleIndex].y >= maxHeigh) {
+            
+            if (Date.now() - this.lastClickTimeStamp >= 1000 / this.clicksPerSecond) {
+                
+                this.jump();
+
+                if (game.mode == 'computer') {
+                    
+                    playerDot.jump();
+
+                }
+                
+                this.lastClickTimeStamp = Date.now();
+                
+            };
+            
+        };
+
+    },
+
+    checkHit() {
+
+        // hit ground
+        if (computerDot.yPosition + computerDot.height >= canvas.height) {
+
+            return true;
+            
+        // hit obstacle
+        } else if (obstacle.pairs[0].x <= computerDot.xPosition + computerDot.width && obstacle.pairs[0].x + obstacle.width >= computerDot.xPosition) {
+    
+            if (computerDot.yPosition <= obstacle.pairs[0].y || computerDot.yPosition + computerDot.height >= obstacle.pairs[0].y + obstacle.space){
+    
+                return true;
+    
+            }      
+    
+        }
+    
+        // hit nothing
+        return false; 
+
+    },
+
+    moveDot() {
+
+        this.ySpeed += this.yAcceleration
+        this.yPosition += this.ySpeed
+
+        // Limits the 'yPosition' to canvas size
+
+        if (this.yPosition + this.height >= canvas.height) {
+            
+            this.yPosition = canvas.height - this.height;
+        
+        } else if (this.yPosition < 0) {
+
+            this.yPosition = 0;
+
+        }
+
+        ctx.fillStyle = this.fillStyle;
+        ctx.fillRect(this.xPosition, this.yPosition, this.width, this.height);
+        ctx.strokeStyle = '#00000040'
+        ctx.strokeRect(this.xPosition, this.yPosition, this.width, this.height);
+
+    },
+
+    jump() {
+
+        this.ySpeed = -6.25;
+
+    }
+};
+
+var obstacle = {
 
     height : canvas.height,
     width : 60,
@@ -175,17 +293,38 @@ var obstacles = {
 
     pairs : [],
 
+    createNewPair(xPosition) {
+
+        var yValue = parseInt(Math.random() * (canvas.height - this.space));
+
+        this.pairs.push({'x' : xPosition, 'y' : yValue});
+        
+    },
+
     moveObstacles() {
 
-        if (this.distance >= this.frequency) {
-        
-            var yValue = parseInt(Math.random() * (canvas.height - this.space));
 
-            this.pairs.push({'x' : canvas.width, 'y' : yValue});
 
-            this.distance = 0;
+        while (obstacle.pairs.length < 3) {
+
+            var lastPairIndex = obstacle.pairs.length - 1;
+            var xPosition = obstacle.pairs[lastPairIndex].x + obstacle.frequency;
+
+            obstacle.createNewPair(xPosition);        
+
+            //this.distance = 0;
 
         }
+
+        // if (this.distance >= this.frequency) {
+        
+        //     var yValue = parseInt(Math.random() * (canvas.height - this.space));
+
+        //     this.pairs.push({'x' : canvas.width, 'y' : yValue});
+
+        //     this.distance = 0;
+
+        // }
 
         if (this.pairs.length > 0 && this.pairs[0].x < - this.width) {
 
@@ -205,14 +344,20 @@ var obstacles = {
             ctx.strokeStyle = 'black'
             ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
 
-            this.pairs[obst].x -= dot.xSpeed;
+            this.pairs[obst].x -= game.xSpeed;
 
         }
 
-        this.distance = this.distance + dot.xSpeed;
+        this.distance = this.distance + game.xSpeed;
 
-        if (game.level < 8) {
-            dot.xSpeed += dot.xAcceleration;
+        if (game.xSpeed + game.xAcceleration <= game.xMaxSpeed) {
+
+            game.xSpeed += game.xAcceleration;
+
+        } else {
+
+            game.xSpeed = game.xMaxSpeed;
+
         }
 
 
@@ -271,9 +416,9 @@ var drawScreen = {
             ctx.fillStyle = 'black'
             ctx.fillText("START", canvas.width/2, 430);
 
-        // text 'Multiplayer'
+        // text 'Computer'
             ctx.fillStyle = '#8d8d8d'
-            ctx.fillText("Multiplayer", canvas.width*2/3, 230);    
+            ctx.fillText("Computer", canvas.width*2/3, 230);    
     },
 
     instructions() {
@@ -409,46 +554,35 @@ var drawScreen = {
 
 function gameStart() {
 
-    dot.yPosition = dot.yStartPosition;
-    dot.ySpeed = 0;
-    dot.xSpeed = dot.xStartSpeed;
+    playerDot.yPosition = playerDot.yStartPosition;
+    playerDot.ySpeed = -6.25;
 
-    obstacles.pairs = [];
-    obstacles.distance = obstacles.frequency;
+    if (game.mode == 'computer') {
+        
+        computerDot.yPosition = computerDot.yStartPosition;
+        computerDot.ySpeed = -6.25;
+        computerDot.lastClickTimeStamp = 0;
+        computerDot.isDead = false;
+        computerDot.score = 0;
 
-    game.currentScreen = 'game'
+    }
+    
+    obstacle.pairs = [];
+    obstacle.distance = obstacle.frequency;
+    
+    game.currentScreen = 'game';
     game.score = 0;
+    game.xSpeed = game.xStartSpeed;
     game.fpsValue = 0;
     game.fpsTimeStamp = Date.now();
 
     document.getElementById('score-name-input').style.setProperty('display','none');
 
+    obstacle.createNewPair(canvas.width);
+
     gameLoop();
 
 }
-
-function isGameOver() {
-
-    // hit ground
-    if (dot.yPosition + dot.height >= canvas.height) {
-
-       return true;
-        
-    // hit obstacle
-    } else if (obstacles.pairs.length > 0 && obstacles.pairs[0].x <= dot.xPosition + dot.width && obstacles.pairs[0].x + obstacles.width >= dot.xPosition) {
-
-        if (dot.yPosition <= obstacles.pairs[0].y || dot.yPosition + dot.height >= obstacles.pairs[0].y + obstacles.space){
-
-            return true;
-
-        }      
-
-    }
-
-    // hit nothing
-    return false;
-
-};
 
 function gameLoop() {
 
@@ -456,9 +590,23 @@ function gameLoop() {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        dot.moveDot();
+        obstacle.moveObstacles();
+
+        if (game.mode == 'computer' && !computerDot.isDead) {
+            
+            computerDot.think();
+            computerDot.moveDot();
+
+            if (computerDot.checkHit()) {
+
+                computerDot.isDead = true;
+                computerDot.score = game.score;
+
+            }
+
+        }
         
-        obstacles.moveObstacles();
+        playerDot.moveDot();
         
         drawScreen.instructions();
 
@@ -486,6 +634,29 @@ function gameLoop() {
 
 };
 
+function isGameOver() {
+
+    // hit ground
+    if (playerDot.yPosition + playerDot.height >= canvas.height) {
+
+       return true;
+        
+    // hit obstacle
+    } else if (obstacle.pairs.length > 0 && obstacle.pairs[0].x <= playerDot.xPosition + playerDot.width && obstacle.pairs[0].x + obstacle.width >= playerDot.xPosition) {
+
+        if (playerDot.yPosition <= obstacle.pairs[0].y || playerDot.yPosition + playerDot.height >= obstacle.pairs[0].y + obstacle.space){
+
+            return true;
+
+        }      
+
+    }
+
+    // hit nothing
+    return false;
+
+};
+
 canvas.addEventListener('mousedown', function(event) {
 
     if (event.button == 0){
@@ -496,6 +667,14 @@ canvas.addEventListener('mousedown', function(event) {
         if (game.currentScreen == 'initial') {
 
             if (x >= 323 && x <= 473 && y >= 395 && y <= 445) {
+
+                game.mode = 'solo'
+                
+                gameStart();
+
+            } else if (x >= 420 && x <= 650 && y >= 195 && y <= 245) {
+
+                game.mode = 'computer'
                 
                 gameStart();
 
@@ -503,8 +682,17 @@ canvas.addEventListener('mousedown', function(event) {
 
         } else if (game.currentScreen == 'game') {
 
-            dot.jump()
-            
+            if (game.mode == 'solo') {
+
+                playerDot.jump()
+
+            } else {
+
+                playerDot.yPosition = 500;
+                computerDot.yPosition = 500;
+                
+            }
+    
         } else if (game.currentScreen == 'game over') {
 
             if (x >= 300 && x <= 500 && y >= 395 && y <= 445) {
