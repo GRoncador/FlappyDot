@@ -1,6 +1,6 @@
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
-var db = firebase.database();
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const db = firebase.database();
 
 var game = {
 
@@ -188,7 +188,7 @@ var computerDot = {
 
     think() {
         
-        if (obstacle.pairs[0].x + obstacle.width - game.xSpeed > computerDot.xPosition) {
+        if (obstacle.pairs[0].x + obstacle.width /**- game.xSpeed */> computerDot.xPosition) {
             
             var nextObstacleIndex = 0;
             
@@ -200,11 +200,11 @@ var computerDot = {
 
             if (obstacle.pairs[nextObstacleIndex+1].y < obstacle.pairs[nextObstacleIndex].y) {
 
-                var maxHeigh = 16 + 75; // jump heigh = 75px
+                var maxHeigh = 47 + 75; // jump heigh = 75px
 
             } else {
 
-                var maxHeigh = obstacle.space - computerDot.height - 16;
+                var maxHeigh = obstacle.space - computerDot.height - 47;
 
             }
         
@@ -213,14 +213,10 @@ var computerDot = {
             if (Date.now() - this.lastClickTimeStamp >= 1000 / this.clicksPerSecond) {
                 
                 this.jump();
-
-                if (game.mode == 'computer') {
-                    
-                    playerDot.jump();
-
-                }
-                
+                                    
                 this.lastClickTimeStamp = Date.now();
+
+                //playerDot.jump();
                 
             };
             
@@ -375,20 +371,6 @@ var drawScreen = {
             ctx.fillStyle = '#ffffffb5'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-        // yellow button - 'Play Solo'
-            ctx.fillStyle = '#ffd000'    
-            ctx.fillRect(150, 195, 230, 50)
-
-            ctx.strokeStyle = '#b48912'
-            ctx.strokeRect(150, 195, 230, 50)
-
-        // grey button - 'Multiplayer'
-            ctx.fillStyle = '#c7c7c7'
-            ctx.fillRect(420,195, 230, 50)
-
-            ctx.strokeStyle = '#313131'
-            ctx.strokeRect(420, 195, 230, 50)
-
         // red button - 'START'
             ctx.fillStyle = '#ff6161'
             ctx.fillRect(323, 395, 150, 50)
@@ -396,29 +378,77 @@ var drawScreen = {
             ctx.strokeStyle = '#af2323'
             ctx.strokeRect(323, 395, 150, 50)
         
-        // text '(coming soon)'
-            ctx.textAlign = "center";
-            ctx.fillStyle = '#313131'
-            ctx.font = "20px 'VT323', monospace";
-            ctx.fillText("(coming soon)", canvas.width*2/3, 265);
-
         // text 'Flappy Pixel'
             ctx.fillStyle = 'black'
             ctx.textAlign = "center";
             ctx.font = "80px 'VT323', monospace";
             ctx.fillText("Flappy Pixel", canvas.width/2, 100);
 
-        // text 'Solo'
-            ctx.font = "40px 'VT323', monospace";
-            ctx.fillText("Solo", canvas.width/3, 230);
-
         // text 'START'
             ctx.fillStyle = 'black'
+            ctx.font = "40px 'VT323', monospace";
             ctx.fillText("START", canvas.width/2, 430);
 
-        // text 'Computer'
-            ctx.fillStyle = '#8d8d8d'
-            ctx.fillText("Computer", canvas.width*2/3, 230);    
+        this.activateButton(game.mode);
+
+    },
+
+    activateButton(button) {
+
+        if (button == 'solo') {
+
+            // yellow button - 'Play Solo'
+                ctx.fillStyle = '#ffd000'    
+                ctx.fillRect(150, 195, 230, 50)
+
+                ctx.strokeStyle = '#b48912'
+                ctx.strokeRect(150, 195, 230, 50)
+
+            // grey button - 'Vs Computer'
+                ctx.fillStyle = '#c7c7c7'
+                ctx.fillRect(420,195, 230, 50)
+
+                ctx.strokeStyle = '#313131'
+                ctx.strokeRect(420, 195, 230, 50)
+
+            // text 'Vs Computer'
+                ctx.font = "40px 'VT323', monospace";
+                ctx.fillStyle = '#8d8d8d'
+                ctx.fillText("Vs Computer", canvas.width*2/3, 230);
+                
+            // text 'Solo'
+                ctx.font = "40px 'VT323', monospace";
+                ctx.fillStyle = 'black'
+                ctx.fillText("Solo", canvas.width/3, 230);
+    
+        } else if (button == 'vs computer') {
+
+            // grey button - 'Play Solo'
+                ctx.fillStyle = '#c7c7c7'
+                ctx.fillRect(150, 195, 230, 50)
+                
+                ctx.strokeStyle = '#313131'
+                ctx.strokeRect(150, 195, 230, 50)
+            
+            // yellow button - 'Vs Computer'
+                ctx.fillStyle = '#ffd000'    
+                ctx.fillRect(420,195, 230, 50)
+            
+                ctx.strokeStyle = '#b48912'
+                ctx.strokeRect(420, 195, 230, 50)
+
+            // text 'Vs Computer'
+                ctx.font = "40px 'VT323', monospace";
+                ctx.fillStyle = 'black'
+                ctx.fillText("Vs Computer", canvas.width*2/3, 230);
+            
+            // text 'Solo'
+                ctx.font = "40px 'VT323', monospace";
+                ctx.fillStyle = '#8d8d8d'
+                ctx.fillText("Solo", canvas.width/3, 230);
+
+        }
+
     },
 
     instructions() {
@@ -444,18 +474,34 @@ var drawScreen = {
 
         game.currentScreen = 'game over'
 
-        // white background
-            ctx.fillStyle = '#ffffffb5'
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
+        var text = '';
 
-        // text 'GAME OVER'    
-            ctx.fillStyle = 'black'    
+        if (game.mode == 'solo') {
+
+            text = 'GAME OVER';
+
+        } else if (game.mode == 'vs computer' && computerDot.isDead) {
+
+            text = 'YOU WIN';
+
+        } else if (game.mode == 'vs computer' && !computerDot.isDead) {
+
+            text = 'YOU LOSE';
+
+        };
+
+        // white background
+            ctx.fillStyle = '#ffffffb5';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // text 'GAME OVER' or 'YOU WIN' or 'YOU LOSE'  
+            ctx.fillStyle = 'black';    
             ctx.textAlign = "center";
             ctx.font = "100px 'VT323', monospace";
-            ctx.fillText("GAME OVER", canvas.width/2, 100);
+            ctx.fillText(text, canvas.width/2, 100);
 
         // text 'your score........XXX'
-            ctx.fillStyle = 'black'    
+            ctx.fillStyle = 'black';    
             ctx.textAlign = "center";
             ctx.font = "40px 'VT323', monospace";
             ctx.fillText(`Your score is ......... ${game.score}`, canvas.width/2, 170);
@@ -557,7 +603,7 @@ function gameStart() {
     playerDot.yPosition = playerDot.yStartPosition;
     playerDot.ySpeed = -6.25;
 
-    if (game.mode == 'computer') {
+    if (game.mode == 'vs computer') {
         
         computerDot.yPosition = computerDot.yStartPosition;
         computerDot.ySpeed = -6.25;
@@ -592,7 +638,7 @@ function gameLoop() {
         
         obstacle.moveObstacles();
 
-        if (game.mode == 'computer' && !computerDot.isDead) {
+        if (game.mode == 'vs computer' && !computerDot.isDead) {
             
             computerDot.think();
             computerDot.moveDot();
@@ -620,7 +666,7 @@ function gameLoop() {
 
     } else {
 
-        drawScreen.gameOver()
+        drawScreen.gameOver();
 
         if (game.score > game.lowestHighScore || game.highScoresDB.length < 10) {
     
@@ -666,32 +712,25 @@ canvas.addEventListener('mousedown', function(event) {
 
         if (game.currentScreen == 'initial') {
 
-            if (x >= 323 && x <= 473 && y >= 395 && y <= 445) {
-
-                game.mode = 'solo'
+            if (x >= 150 && x <= 380 && y >= 195 && y <= 245) {
                 
-                gameStart();
-
+                drawScreen.activateButton('solo');
+                game.mode = 'solo';
+                
             } else if (x >= 420 && x <= 650 && y >= 195 && y <= 245) {
 
-                game.mode = 'computer'
+                drawScreen.activateButton('vs computer');
+                game.mode = 'vs computer';
                 
-                gameStart();
+            } else if (x >= 323 && x <= 473 && y >= 395 && y <= 445) {
 
+                gameStart();
+                
             }
 
         } else if (game.currentScreen == 'game') {
 
-            if (game.mode == 'solo') {
-
-                playerDot.jump()
-
-            } else {
-
-                playerDot.yPosition = 500;
-                computerDot.yPosition = 500;
-                
-            }
+            playerDot.jump()
     
         } else if (game.currentScreen == 'game over') {
 
