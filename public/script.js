@@ -226,13 +226,15 @@ var computerDot = {
 
     checkHit() {
 
-        // hit ground
-        if (computerDot.yPosition + computerDot.height >= canvas.height) {
+        // // hit ground
+        // if (computerDot.yPosition + computerDot.height >= canvas.height) {
 
-            return true;
+        //     return true;
             
-        // hit obstacle
-        } else if (obstacle.pairs[0].x <= computerDot.xPosition + computerDot.width && obstacle.pairs[0].x + obstacle.width >= computerDot.xPosition) {
+        // // hit obstacle
+        // } else 
+        
+        if (obstacle.pairs[0].x <= computerDot.xPosition + computerDot.width && obstacle.pairs[0].x + obstacle.width >= computerDot.xPosition) {
     
             if (computerDot.yPosition <= obstacle.pairs[0].y || computerDot.yPosition + computerDot.height >= obstacle.pairs[0].y + obstacle.space){
     
@@ -682,13 +684,15 @@ function gameLoop() {
 
 function isGameOver() {
 
-    // hit ground
-    if (playerDot.yPosition + playerDot.height >= canvas.height) {
+    // // hit ground
+    // if (playerDot.yPosition + playerDot.height >= canvas.height) {
 
-       return true;
+    //    return true;
         
-    // hit obstacle
-    } else if (obstacle.pairs.length > 0 && obstacle.pairs[0].x <= playerDot.xPosition + playerDot.width && obstacle.pairs[0].x + obstacle.width >= playerDot.xPosition) {
+    // // hit obstacle
+    // } else 
+    
+    if (obstacle.pairs.length > 0 && obstacle.pairs[0].x <= playerDot.xPosition + playerDot.width && obstacle.pairs[0].x + obstacle.width >= playerDot.xPosition) {
 
         if (playerDot.yPosition <= obstacle.pairs[0].y || playerDot.yPosition + playerDot.height >= obstacle.pairs[0].y + obstacle.space){
 
