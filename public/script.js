@@ -140,13 +140,13 @@ var playerDot = {
 
         // Limits the 'yPosition' to canvas size
 
-        if (this.yPosition + this.height >= canvas.height) {
+        if (this.yPosition + this.height >= canvas.height + 11 * this.height) {
             
-            this.yPosition = canvas.height - this.height;
+            this.yPosition = canvas.height + (11 * this.height) - this.height;
         
-        } else if (this.yPosition < 0) {
+        } else if (this.yPosition < - 11 * this.height) {
 
-            this.yPosition = 0;
+            this.yPosition = - 11 * this.height;
 
         }
 
