@@ -1,32 +1,113 @@
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
-var db = firebase.database();
+const canvas = document.getElementById('canvas');
+const scoreNameInput = document.getElementById('score-name-input');
+const ctx = canvas.getContext('2d');
+const db = firebase.database();
+const game = {
 
-var game = {
+    data : {
 
-    score : 0,
-    lowestHighScore : 0,
-    level : 0,
-    levelChange : 500,
-    highScoresDB : [],
-    namesDB : [],
-    currentScreen : 'initial',
-    fpsTimeStamp : 0,
-    fpsCount: 0,
+        mode : 'solo',
+        currentScreen : 'initial',
+    
+        player : [],
+        computerBots : [],
+        pipes : [],
+        
+        score : 0,
+        xAcceleration : 0.001,
+        xMaxSpeed : 7,
+        xSpeed : 2,
+    
+        distanceBetweenPipes : 400,
+    
+        highScoresDB : [],
+        namesDB : [],
+        lowestHighScore : 0,
+    
+        _fpsTimeStamp : 0,
+        _fpsCount: 0,
 
-    fpsCalculate() {
+    },
 
-        if (Date.now() - game.fpsTimeStamp >= 5000) {
+    start() {
+    
+        this.resetGame();
+        this.data.currentScreen = 'game';
+        scoreNameInput.style.setProperty('display','none');
+    
+        this.data.player.push(new Pixel());
+    
+        if (this.data.mode == 'vs computer') {
+    
+            this.data.computerBots.push(new AI());
+            
+        }
+    
+        this.data.pipes.push(new Pipe())
+    
+        gameLoop();
+    
+    },
 
-            game.fpsTimeStamp = Date.now();
+    updateGameSpeed() {
 
-            document.getElementById('fps').innerText = `FPS: ${game.fpsCount/5}`;
+        if (this.data.xSpeed + this.data.xAcceleration <= this.data.xMaxSpeed) {
 
-            game.fpsCount = 0;
+            this.data.xSpeed += this.data.xAcceleration;
 
         } else {
 
-            game.fpsCount ++
+            this.data.xSpeed = this.data.xMaxSpeed;
+
+        };
+
+    },
+
+    updatePipes() {
+
+        if (this.data.pipes[0].xPosition <= - this.data.pipes[0].width) {
+
+            this.data.pipes.shift();
+
+        };
+        
+        while (this.data.pipes.length < 3) {
+        
+            let _lastPairIndex = this.data.pipes.length - 1;
+            let _xPosition = this.data.pipes[_lastPairIndex].xPosition + this.data.pipes[_lastPairIndex].width + this.data.distanceBetweenPipes;
+        
+            this.data.pipes.push(new Pipe(_xPosition));
+
+        };
+
+    },
+
+    resetGame() {
+
+        this.data.score = 0;
+        this.data.xSpeed = 2;
+        this.data._fpsCount = 0;
+        this.data._fpsTimeStamp = Date.now();
+
+        this.data.player = [];
+        this.data.computerBots = [];
+        this.data.pipes = [];
+
+    },
+
+    fpsCalculate() {
+
+        if (Date.now() - this.data._fpsTimeStamp >= 5000) {
+
+            this.data._fpsTimeStamp = Date.now();
+
+            document.getElementById('fps').innerText = `FPS: ${this.data._fpsCount/5}`;
+
+            this.data._fpsCount = 0;
+
+        } else {
+
+            this.data._fpsCount ++
 
         }
 
@@ -34,528 +115,220 @@ var game = {
 
     updateScore() {
 
-        document.getElementById('score').innerText = `Score: ${this.score}`;
+        this.data.score ++;
 
-        game.level = parseInt(game.score / game.levelChange);
+        document.getElementById('score').innerText = `Score: ${this.data.score}`;
 
     },
 
     getHighScores() {
 
-        let rawNamesDB = [];
-        let rawHighScoresDB = [];
+        let _rawNamesDB = [];
+        let _rawHighScoresDB = [];
 
-        db.ref('names').get().then((snapshot) => {
-
-            rawNamesDB = Object.entries(snapshot.val());
-
-        }).catch((error) => {console.error(error)})
+        db.ref('names').get()
+        .then((_snapshot) => {_rawNamesDB = Object.entries(_snapshot.val())})
+        .catch((_error) => {console.error(_error)});
         
-        db.ref('highScores').get().then((snapshot) => {
+        db.ref('highScores').get()
+        .then((_snapshot) => {
             
-            rawHighScoresDB = Object.entries(snapshot.val());
+            _rawHighScoresDB = Object.entries(_snapshot.val());
             
-            game.highScoresDB = rawHighScoresDB.sort( (a,b) => a[1] - b[1] ).slice(-10)
+            this.data.highScoresDB = _rawHighScoresDB.sort( (a,b) => a[1] - b[1] ).slice(-10);
 
-            game.lowestHighScore = game.highScoresDB[0][1];
+            this.data.lowestHighScore = this.data.highScoresDB[0][1];
             
-            game.highScoresDB.forEach( function(scoreData,index) {
+            this.data.highScoresDB.forEach( (_scoreData, _index) => {
                 
-                for (i in rawNamesDB) {
+                for (i in _rawNamesDB) {
 
-                    if (rawNamesDB[i][0] == scoreData[0]) {
+                    if (_rawNamesDB[i][0] == _scoreData[0]) {
 
-                        game.highScoresDB[index][0] = rawNamesDB[i][1];
+                        this.data.highScoresDB[_index][0] = _rawNamesDB[i][1];
                         
                         break;
 
-                    }
+                    };
                     
-                }
+                };
 
-                game.highScoresDB[index][1] = "0".repeat(6 - game.highScoresDB[index][1].toString().length) + game.highScoresDB[index][1].toString();
+                this.data.highScoresDB[_index][1] = "0".repeat(6 - this.data.highScoresDB[_index][1].toString().length) + this.data.highScoresDB[_index][1].toString();
                 
-            })
+            });
 
-            game.highScoresDB.reverse();
+            this.data.highScoresDB.reverse();
     
-            game.showHighScores();
+            this.showHighScores();
             
-        }).catch((error) => {console.error(error)})
+        }).catch((_error) => {console.error(_error)});
     
     },
     
     showHighScores() {
     
-        for (i in game.highScoresDB) {
+        for (_i in this.data.highScoresDB) {
     
-            document.getElementById('li-' + i).innerText = game.highScoresDB[i][1] + '....' + game.highScoresDB[i][0];
+            document.getElementById('li-' + _i).innerText = this.data.highScoresDB[_i][1] + '....' + this.data.highScoresDB[_i][0];
     
-        }
+        };
     
     },
     
     sendHighScore() {
 
-        let keyID = db.ref().push().key;
-        let scoreObj = {};
-        let playerObj = {};
+        let _keyID = db.ref().push().key;
+        let _scoreObj = {};
+        let _playerObj = {};
 
-        scoreObj[keyID] = game.score;
-        playerObj[keyID] = document.getElementById('score-name-input').value.toUpperCase();
+        _scoreObj[_keyID] = this.data.score;
+        _playerObj[_keyID] = scoreNameInput.value.toUpperCase();
         
-        firebase.database().ref('highScores').update(scoreObj);
-        firebase.database().ref('names').update(playerObj);
+        firebase.database().ref('highScores').update(_scoreObj);
+        firebase.database().ref('names').update(_playerObj);
 
         drawScreen.highScoreSent()
 
-        game.getHighScores()
+        this.getHighScores()
         
     },
-
-}
-
-var dot = {
-
-    // style
-    xPosition : 50,
-    yStartPosition : 50,
-    yPosition : 50,
-    width : 30,
-    height : 30,
-    fillStyle : '#ffd000',
-
-
-    // animation
-    yAcceleration : 0.25,
-    ySpeed : 0,
-    xAcceleration : 1 / game.levelChange,
-    xStartSpeed : 2,
-    xSpeed : 0,
-
-    moveDot() {
-
-        this.ySpeed += this.yAcceleration
-        this.yPosition += this.ySpeed
-
-        // Limits the 'yPosition' to canvas size
-
-        if (this.yPosition + this.height >= canvas.height) {
-            
-            this.yPosition = canvas.height - this.height;
-        
-        } else if (this.yPosition < 0) {
-
-            this.yPosition = 0;
-
-        }
-
-        ctx.fillStyle = this.fillStyle;
-        ctx.fillRect(this.xPosition, this.yPosition, this.width, this.height);
-        ctx.strokeStyle = 'black'
-        ctx.strokeRect(this.xPosition, this.yPosition, this.width, this.height);
-
-    },
-
-    jump() {
-
-        this.ySpeed = -5;
-
-    }
-};
-
-var obstacles = {
-
-    height : canvas.height,
-    width : 60,
-    space : 200,
-    frequency : 400,
-    distance : 0,
-    fillStyle : '#71BF2E',
-
-    pairs : [],
-
-    moveObstacles() {
-
-        if (this.distance >= this.frequency) {
-        
-            var yValue = parseInt(Math.random() * (canvas.height - this.space));
-
-            this.pairs.push({'x' : canvas.width, 'y' : yValue});
-
-            this.distance = 0;
-
-        }
-
-        if (this.pairs.length > 0 && this.pairs[0].x < - this.width) {
-
-            this.pairs.shift();
-
-        }
-
-        for (var obst in this.pairs) {
-            
-            ctx.fillStyle = this.fillStyle;
-            ctx.fillRect(this.pairs[obst].x, (this.pairs[obst].y - this.height), this.width, this.height);
-            ctx.strokeStyle = 'black'
-            ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y - this.height), this.width, this.height);
-
-            ctx.fillStyle = this.fillStyle;
-            ctx.fillRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
-            ctx.strokeStyle = 'black'
-            ctx.strokeRect(this.pairs[obst].x, (this.pairs[obst].y + this.space), this.width, this.height);
-
-            this.pairs[obst].x -= dot.xSpeed;
-
-        }
-
-        this.distance = this.distance + dot.xSpeed;
-
-        if (game.level < 8) {
-            dot.xSpeed += dot.xAcceleration;
-        }
-
-
-    },
-
-}
-
-var drawScreen = {
-
-    initial() {
-
-        game.currentScreen = 'initial'
-
-        // white background
-            ctx.fillStyle = '#ffffffb5'
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-        // yellow button - 'Play Solo'
-            ctx.fillStyle = '#ffd000'    
-            ctx.fillRect(150, 195, 230, 50)
-
-            ctx.strokeStyle = '#b48912'
-            ctx.strokeRect(150, 195, 230, 50)
-
-        // grey button - 'Multiplayer'
-            ctx.fillStyle = '#c7c7c7'
-            ctx.fillRect(420,195, 230, 50)
-
-            ctx.strokeStyle = '#313131'
-            ctx.strokeRect(420, 195, 230, 50)
-
-        // red button - 'START'
-            ctx.fillStyle = '#ff6161'
-            ctx.fillRect(323, 395, 150, 50)
-
-            ctx.strokeStyle = '#af2323'
-            ctx.strokeRect(323, 395, 150, 50)
-        
-        // text '(coming soon)'
-            ctx.textAlign = "center";
-            ctx.fillStyle = '#313131'
-            ctx.font = "20px 'VT323', monospace";
-            ctx.fillText("(coming soon)", canvas.width*2/3, 265);
-
-        // text 'Flappy Pixel'
-            ctx.fillStyle = 'black'
-            ctx.textAlign = "center";
-            ctx.font = "80px 'VT323', monospace";
-            ctx.fillText("Flappy Pixel", canvas.width/2, 100);
-
-        // text 'Solo'
-            ctx.font = "40px 'VT323', monospace";
-            ctx.fillText("Solo", canvas.width/3, 230);
-
-        // text 'START'
-            ctx.fillStyle = 'black'
-            ctx.fillText("START", canvas.width/2, 430);
-
-        // text 'Multiplayer'
-            ctx.fillStyle = '#8d8d8d'
-            ctx.fillText("Multiplayer", canvas.width*2/3, 230);    
-    },
-
-    instructions() {
-
-        if (game.currentScreen == 'game' && game.score <= 100) {
-
-            ctx.textAlign = "center";
-            ctx.fillStyle = 'black'
-            ctx.font = "50px 'VT323', monospace";
-            ctx.fillText("1 - Click to jump 🖱️ ⇡", canvas.width/2, canvas.height/2);
-
-        } else if (game.currentScreen == 'game' && game.score <= 300) {
-
-            ctx.textAlign = "center";
-            ctx.fillStyle = 'black'
-            ctx.font = "50px 'VT323', monospace";
-            ctx.fillText("2 - Avoid the ground and obstacles", canvas.width/2, canvas.height/2);
-
-        }
-    },
-
-    gameOver() {
-
-        game.currentScreen = 'game over'
-
-        // white background
-            ctx.fillStyle = '#ffffffb5'
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-        // text 'GAME OVER'    
-            ctx.fillStyle = 'black'    
-            ctx.textAlign = "center";
-            ctx.font = "100px 'VT323', monospace";
-            ctx.fillText("GAME OVER", canvas.width/2, 100);
-
-        // text 'your score........XXX'
-            ctx.fillStyle = 'black'    
-            ctx.textAlign = "center";
-            ctx.font = "40px 'VT323', monospace";
-            ctx.fillText(`Your score is ......... ${game.score}`, canvas.width/2, 170);
-
-        // red button - 'PLAY AGAIN'
-            ctx.fillStyle = '#ff6161'
-            ctx.fillRect(300, 395, 200, 50)
-
-            ctx.strokeStyle = '#af2323'
-            ctx.strokeRect(300, 395, 200, 50)
-
-        // text 'PLAY AGAIN'
-            ctx.fillStyle = 'black'
-            ctx.fillText("PLAY AGAIN", canvas.width/2, 430);
-
-        // grey button - 'MENU'
-            ctx.fillStyle = '#9a9a9a'
-            ctx.fillRect(600, 395, 100, 50)
-
-            ctx.strokeStyle = 'black'
-            ctx.strokeRect(600, 395, 100, 50)
-
-        // text 'MENU'
-            ctx.fillStyle = 'black'
-            ctx.fillText("MENU", 650, 430);
-
-    },
-
-    highScoreGameOver() {
-
-        game.currentScreen = 'game over - high score'
-
-        // yellow box
-            ctx.fillStyle = '#ffd000'    
-            ctx.fillRect(100, 205, 600, 150)
-
-            ctx.strokelStyle = 'black'    
-            ctx.strokeRect(100, 205, 600, 150)
-
-        // text 'New High Score!'
-            ctx.fillStyle = "black";
-            ctx.textAlign = "center";
-            ctx.font = "40px 'VT323', monospace";
-            ctx.fillText("New High Score!", canvas.width/2, 245);
-
-        // text 'Enter your name:'
-            ctx.fillStyle = 'black'    
-            ctx.font = "25px 'VT323', monospace";
-            ctx.fillText('Enter your name:', 195, 307);
-
-        // grey button 'Send Score'
-            ctx.fillStyle = '#9a9a9a'
-            ctx.fillRect(525, 285, 150, 33)
-
-            ctx.strokeStyle = 'black'
-            ctx.strokeRect(525, 285, 150, 33)
-
-        // text 'Send Score'
-            ctx.textAlign = "left";
-            ctx.fillStyle = 'black'    
-            ctx.font = "25px 'VT323', monospace";
-            ctx.fillText('Send Score', 550, 307);
-
-        // name input
-            document.getElementById('score-name-input').style.setProperty('display','block');
-    },
-
-    highScoreSent() {
-
-        game.currentScreen = 'game over'
-        
-        // yellow box
-            ctx.fillStyle = '#ffd000'    
-            ctx.fillRect(100, 205, 600, 150)
-
-            ctx.strokelStyle = 'black'    
-            ctx.strokeRect(100, 205, 600, 150)
-
-        // text 'New High Score!'
-            ctx.fillStyle = "black";
-            ctx.textAlign = "center";
-            ctx.font = "40px 'VT323', monospace";
-            ctx.fillText("New High Score!", canvas.width/2, 245);
-
-        // text 'Welcome to the Hall of Fame :)'
-            ctx.fillStyle = 'black'
-            ctx.textAlign = "center";    
-            ctx.font = "25px 'VT323', monospace";
-            ctx.fillText('Welcome to the Hall of Fame :)', canvas.width/2, 307);
-
-        document.getElementById('score-name-input').style.setProperty('display','none');
-
-    },
-
-}
-
-function gameStart() {
-
-    dot.yPosition = dot.yStartPosition;
-    dot.ySpeed = 0;
-    dot.xSpeed = dot.xStartSpeed;
-
-    obstacles.pairs = [];
-    obstacles.distance = obstacles.frequency;
-
-    game.currentScreen = 'game'
-    game.score = 0;
-    game.fpsValue = 0;
-    game.fpsTimeStamp = Date.now();
-
-    document.getElementById('score-name-input').style.setProperty('display','none');
-
-    gameLoop();
-
-}
-
-function isGameOver() {
-
-    // hit ground
-    if (dot.yPosition + dot.height >= canvas.height) {
-
-       return true;
-        
-    // hit obstacle
-    } else if (obstacles.pairs.length > 0 && obstacles.pairs[0].x <= dot.xPosition + dot.width && obstacles.pairs[0].x + obstacles.width >= dot.xPosition) {
-
-        if (dot.yPosition <= obstacles.pairs[0].y || dot.yPosition + dot.height >= obstacles.pairs[0].y + obstacles.space){
-
-            return true;
-
-        }      
-
-    }
-
-    // hit nothing
-    return false;
 
 };
 
 function gameLoop() {
 
-    if (!isGameOver()) {
+    game.updatePipes();
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!game.data.player[0].checkHit(game.data.pipes)) {
+
+        drawScreen.clear();
+
+        game.updateGameSpeed();
+        game.updateScore();
+        game.fpsCalculate();
+
+        if (game.data.mode == 'vs computer') {
+
+            game.data.computerBots.forEach((_bot) => {
+
+                if (!_bot.isDead) {
+
+                    _bot.think(game.data.pipes, game.data.xSpeed);
+                    _bot.move();
+                    _bot.show();
+
+                    if (_bot.checkHit(game.data.pipes)) {
+
+                        _bot.isDead = true;
+                        _bot.score = game.data.score;
+
+                    };
+
+                };
+
+            });
+            
+        };
+
+        game.data.player[0].move();
+        game.data.player[0].show();
+
+        game.data.pipes.forEach((_pipe) => {
+            
+            _pipe.move(game.data.xSpeed);
+            _pipe.show();
         
-        dot.moveDot();
-        
-        obstacles.moveObstacles();
+        });
         
         drawScreen.instructions();
-
-        game.score ++;
-
-        game.updateScore();
-
-        game.fpsCalculate();
 
         requestAnimationFrame(gameLoop);
 
     } else {
 
-        drawScreen.gameOver()
+        let _aliveBotsNumber = game.data.computerBots.filter(_bot => !_bot.isDead).length;    
+        drawScreen.gameOver(_aliveBotsNumber);
 
-        if (game.score > game.lowestHighScore || game.highScoresDB.length < 10) {
+        if (game.data.score > game.data.lowestHighScore || game.data.highScoresDB.length < 10) {
     
-            drawScreen.highScoreGameOver()
+            drawScreen.highScoreGameOver();
     
         }
-    
-        game.updateScore();
-            
+                
     }
 
 };
 
-canvas.addEventListener('mousedown', function(event) {
+canvas.addEventListener('mousedown', (_event) => {
 
-    if (event.button == 0){
+    if (_event.button == 0){
 
-        let x = event.x - canvas.getBoundingClientRect().x;
-        let y = event.y - canvas.getBoundingClientRect().y;
+        let _x = _event.x - canvas.getBoundingClientRect().x;
+        let _y = _event.y - canvas.getBoundingClientRect().y;
 
-        if (game.currentScreen == 'initial') {
+        if (game.data.currentScreen == 'initial') {
 
-            if (x >= 323 && x <= 473 && y >= 395 && y <= 445) {
+            if (_x >= 150 && _x <= 380 && _y >= 195 && _y <= 245) {
                 
-                gameStart();
+                drawScreen.activateButton('solo');
+                game.data.mode = 'solo';
+                
+            } else if (_x >= 420 && _x <= 650 && _y >= 195 && _y <= 245) {
 
+                drawScreen.activateButton('vs computer');
+                game.data.mode = 'vs computer';
+                
+            } else if (_x >= 323 && _x <= 473 && _y >= 395 && _y <= 445) {
+
+                game.start();
+                
             }
 
-        } else if (game.currentScreen == 'game') {
+        } else if (game.data.currentScreen == 'game') {
 
-            dot.jump()
-            
-        } else if (game.currentScreen == 'game over') {
+            game.data.player[0].jump();
+    
+        } else if (game.data.currentScreen == 'game over') {
 
-            if (x >= 300 && x <= 500 && y >= 395 && y <= 445) {
+            if (_x >= 300 && _x <= 500 && _y >= 395 && _y <= 445) {
                 
-                gameStart();
+                game.start();
 
-            } else if (x >= 600 && x <= 700 && y >= 395 && y <= 445) {
+            } else if (_x >= 600 && _x <= 700 && _y >= 395 && _y <= 445) {
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                document.getElementById('score-name-input').style.setProperty('display','none');
-
+                drawScreen.clear();
+                scoreNameInput.style.setProperty('display','none');
                 drawScreen.initial();
             }
 
-        } else if (game.currentScreen == 'game over - high score') {
+        } else if (game.data.currentScreen == 'game over - high score') {
 
-            if (x >= 300 && x <= 500 && y >= 395 && y <= 445) {
+            if (_x >= 300 && _x <= 500 && _y >= 395 && _y <= 445) {
                 
-                gameStart();
+                game.start();
 
-            }  else if (x >= 600 && x <= 700 && y >= 395 && y <= 445) {
+            }  else if (_x >= 600 && _x <= 700 && _y >= 395 && _y <= 445) {
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                document.getElementById('score-name-input').style.setProperty('display','none');
-
+                drawScreen.clear();
+                scoreNameInput.style.setProperty('display','none');
                 drawScreen.initial();
 
-            } else if (x >= 525 && x <= 675 && y >= 285 && y <= 318) {
+            } else if (_x >= 525 && _x <= 675 && _y >= 285 && _y <= 318) {
                 
-                if (document.getElementById('score-name-input').value == '') {
+                if (scoreNameInput.value == '') {
 
-                    ctx.textAlign = "center";
-                    ctx.fillStyle = 'red'    
-                    ctx.font = "bold 25px 'VT323', monospace";
-                    ctx.fillText('Enter your name:', 195, 307);
+                    drawScreen.highScoreGameOver(true);
 
                 } else {
 
                     game.sendHighScore();
 
-                }
+                };
 
-            }
+            };
 
-        }
+        };
 
-    }
+    };
 
 });
-
-game.getHighScores();
-drawScreen.initial();
