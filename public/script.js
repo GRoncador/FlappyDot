@@ -55,22 +55,7 @@ const game = {
 
             this.data.xSpeed += this.data.xAcceleration;
 
-<<<<<<< HEAD
         } else {
-=======
-        this.ySpeed += this.yAcceleration
-        this.yPosition += this.ySpeed
-
-        // Limits the 'yPosition' to canvas size
-
-        if (this.yPosition + this.height >= canvas.height + 11 * this.height) {
-            
-            this.yPosition = canvas.height + (11 * this.height) - this.height;
-        
-        } else if (this.yPosition < - 11 * this.height) {
-
-            this.yPosition = - 11 * this.height;
->>>>>>> d85f116de3cd0980f00062d7ea8eb3e40559dd43
 
             this.data.xSpeed = this.data.xMaxSpeed;
 
@@ -97,76 +82,7 @@ const game = {
 
     },
 
-<<<<<<< HEAD
     resetGame() {
-=======
-    checkHit() {
-
-        // // hit ground
-        // if (computerDot.yPosition + computerDot.height >= canvas.height) {
-
-        //     return true;
-            
-        // // hit obstacle
-        // } else 
-        
-        if (obstacle.pairs[0].x <= computerDot.xPosition + computerDot.width && obstacle.pairs[0].x + obstacle.width >= computerDot.xPosition) {
-    
-            if (computerDot.yPosition <= obstacle.pairs[0].y || computerDot.yPosition + computerDot.height >= obstacle.pairs[0].y + obstacle.space){
-    
-                return true;
-    
-            }      
-    
-        }
-    
-        // hit nothing
-        return false; 
-
-    },
-
-    moveDot() {
-
-        this.ySpeed += this.yAcceleration
-        this.yPosition += this.ySpeed
-
-        // Limits the 'yPosition' to canvas size
-
-        if (this.yPosition + this.height >= canvas.height) {
-            
-            this.yPosition = canvas.height - this.height;
-        
-        } else if (this.yPosition < 0) {
-
-            this.yPosition = 0;
-
-        }
-
-        ctx.fillStyle = this.fillStyle;
-        ctx.fillRect(this.xPosition, this.yPosition, this.width, this.height);
-        ctx.strokeStyle = '#00000040'
-        ctx.strokeRect(this.xPosition, this.yPosition, this.width, this.height);
-
-    },
-
-    jump() {
-
-        this.ySpeed = -6.25;
-
-    }
-};
-
-var obstacle = {
-
-    height : canvas.height,
-    width : 60,
-    space : 200,
-    frequency : 400,
-    distance : 0,
-    fillStyle : '#71BF2E',
-
-    pairs : [],
->>>>>>> d85f116de3cd0980f00062d7ea8eb3e40559dd43
 
         this.data.score = 0;
         this.data.xSpeed = 2;
@@ -338,35 +254,7 @@ function gameLoop() {
             drawScreen.highScoreGameOver();
     
         }
-<<<<<<< HEAD
-                
-=======
-    
-        game.updateScore();
-            
-    }
 
-};
-
-function isGameOver() {
-
-    // // hit ground
-    // if (playerDot.yPosition + playerDot.height >= canvas.height) {
-
-    //    return true;
-        
-    // // hit obstacle
-    // } else 
-    
-    if (obstacle.pairs.length > 0 && obstacle.pairs[0].x <= playerDot.xPosition + playerDot.width && obstacle.pairs[0].x + obstacle.width >= playerDot.xPosition) {
-
-        if (playerDot.yPosition <= obstacle.pairs[0].y || playerDot.yPosition + playerDot.height >= obstacle.pairs[0].y + obstacle.space){
-
-            return true;
-
-        }      
-
->>>>>>> d85f116de3cd0980f00062d7ea8eb3e40559dd43
     }
 
 };

@@ -8,7 +8,7 @@
 
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
 
     <link rel="stylesheet" href="style.css">
 
@@ -49,27 +49,22 @@
 
     </div>
 
-    <!-- The core Firebase JS SDK is always required and must be listed first -->
-    <script src="https://www.gstatic.com/firebasejs/8.7.1/firebase-app.js"></script>
-
-    <!-- TODO: Add SDKs for Firebase products that you want to use
-        https://firebase.google.com/docs/web/setup#available-libraries -->
-    
+    <script src="https://www.gstatic.com/firebasejs/8.7.1/firebase-app.js"></script>    
     <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-database.js"></script>
-
     <script>
-    // Your web app's Firebase configuration
-    var firebaseConfig = {
-        apiKey: "AIzaSyBY8Kz25DCffEi1IY4O_mv0JBOaaCt5-EA",
-        authDomain: "flappy-pixel-grb.firebaseapp.com",
-        databaseURL: "https://flappy-pixel-grb-default-rtdb.firebaseio.com",
-        projectId: "flappy-pixel-grb",
-        storageBucket: "flappy-pixel-grb.appspot.com",
-        messagingSenderId: "729897463205",
-        appId: "1:729897463205:web:dadbd8ac22589f2efe8c4c"
-    };
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+
+        var firebaseConfig = {
+            apiKey: "AIzaSyBY8Kz25DCffEi1IY4O_mv0JBOaaCt5-EA",
+            authDomain: "flappy-pixel-grb.firebaseapp.com",
+            databaseURL: "https://flappy-pixel-grb-default-rtdb.firebaseio.com",
+            projectId: "flappy-pixel-grb",
+            storageBucket: "flappy-pixel-grb.appspot.com",
+            messagingSenderId: "729897463205",
+            appId: "1:729897463205:web:dadbd8ac22589f2efe8c4c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
     </script>
 
 </body>
@@ -80,6 +75,12 @@
     
 </footer>
 
+<script src="classes.js"></script>
+<script src="screens.js"></script>
 <script src="script.js"></script>
+<script>
+    game.getHighScores();
+    setTimeout(drawScreen.initial, 300);
+</script>
 
 </html>
