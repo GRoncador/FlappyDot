@@ -101,7 +101,7 @@ const game = {
 
             this.data._fpsTimeStamp = Date.now();
 
-            document.getElementById('fps').innerText = `FPS: ${this.data._fpsCount/5}`;
+            // document.getElementById('fps').innerText = `FPS: ${this.data._fpsCount/5}`;
 
             this.data._fpsCount = 0;
 
