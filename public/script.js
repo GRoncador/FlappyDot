@@ -9,16 +9,18 @@ const game = {
         mode : 'solo',
         currentScreen : 'initial',
     
-        player : [],
+        player : {},
         computerBots : [],
         pipes : [],
+        reachableObjects : [],
         
         score : 0,
+        lives : 0,
         xAcceleration : 0.001,
         xMaxSpeed : 7,
         xSpeed : 2,
     
-        distanceBetweenPipes : 400,
+        distanceBetweenPairs : 400,
     
         highScoresDB : [],
         namesDB : [],
@@ -35,15 +37,15 @@ const game = {
         this.data.currentScreen = 'game';
         scoreNameInput.style.setProperty('display','none');
     
-        this.data.player.push(new Pixel());
+        this.data.player = new Pixel();
     
         if (this.data.mode == 'vs computer') {
     
             this.data.computerBots.push(new AI());
             
-        }
+        };
     
-        this.data.pipes.push(new Pipe())
+        this.data.pipes.push(new Pipe());
     
         gameLoop();
     
@@ -74,9 +76,69 @@ const game = {
         while (this.data.pipes.length < 3) {
         
             let _lastPairIndex = this.data.pipes.length - 1;
-            let _xPosition = this.data.pipes[_lastPairIndex].xPosition + this.data.pipes[_lastPairIndex].width + this.data.distanceBetweenPipes;
+            let _xPosition = this.data.pipes[_lastPairIndex].xPosition + this.data.pipes[_lastPairIndex].width + this.data.distanceBetweenPairs;
+
+            let _yDirection, _transparency, _size, _space;
+
+            if (this.data.score > 5500) {
+
+                _space = 150 + Math.random() * 50;
+                _size = sortInt(3) + 3;
+                _transparency = sortInt();
+                _yDirection = sortInt();
+                (sortInt() == 0) ? (_yDirection = _yDirection * -1) : null;
+                
+            } else if (this.data.score > 4000) {
+                
+                _space = 150 + Math.random() * 50;
+                _size = sortInt(3) + 2;
+                _transparency = sortInt();
+
+            }else if (this.data.score > 2500) {
+
+                _size = sortInt() + 2;
+                _transparency = sortInt();
+
+            } else if (this.data.score > 1000) {
+
+                _size = sortInt() + 1;
+
+            };
+            
+            this.data.pipes.push(new Pipe(_xPosition, _size, _transparency, _yDirection, _space));
+
+        };
+
+    },
+
+    showPlayerLives() {
+
+        const _heart = new ObjectHeart(12, 40, 14);
+
+        for (let i = 1; i <= this.data.player.lives; i++) {
+
+            _heart.show();
+
+            _heart.xPosition += 24;
+
+        };
+
+    },
+
+    updateReachableObjects() {
+
+        if (this.data.reachableObjects.length > 0 && this.data.reachableObjects[0].xPosition <= - this.data.reachableObjects[0].width) {
+
+            this.data.reachableObjects.shift();
+
+        };
         
-            this.data.pipes.push(new Pipe(_xPosition));
+        if (this.data.score % 2000 == 0) {
+
+            let _lastPairIndex = this.data.pipes.length - 1;
+            let _xPosition = this.data.pipes[_lastPairIndex].xPosition + this.data.pipes[_lastPairIndex].width + (this.data.distanceBetweenPairs / 2);
+
+            this.data.reachableObjects.push(new ObjectHeart(_xPosition));
 
         };
 
@@ -85,13 +147,15 @@ const game = {
     resetGame() {
 
         this.data.score = 0;
+        this.data.lives = 0;
         this.data.xSpeed = 2;
         this.data._fpsCount = 0;
         this.data._fpsTimeStamp = Date.now();
 
-        this.data.player = [];
+        this.data.player = {};
         this.data.computerBots = [];
         this.data.pipes = [];
+        this.data.reachableObjects = [];
 
     },
 
@@ -196,23 +260,23 @@ const game = {
 };
 
 function gameLoop() {
-
-    game.updatePipes();
-
-    if (!game.data.player[0].checkHit(game.data.pipes)) {
+    
+    if (!game.data.player.checkHit(game.data.pipes)) {
 
         drawScreen.clear();
 
+        game.updatePipes();
+        game.updateReachableObjects();
         game.updateGameSpeed();
         game.updateScore();
         game.fpsCalculate();
-
+        
         if (game.data.mode == 'vs computer') {
-
-            game.data.computerBots.forEach((_bot) => {
-
+            
+            game.data.computerBots.forEach( _bot => {
+                
                 if (!_bot.isDead) {
-
+                    
                     _bot.think(game.data.pipes, game.data.xSpeed);
                     _bot.move();
                     _bot.show();
@@ -224,23 +288,77 @@ function gameLoop() {
 
                     };
 
-                };
+                    // let _reachedObject;
 
+                    // if (game.data.reachableObjects.length > 0) {
+            
+                    //     _reachedObject = _bot.checkReachedObject(game.data.reachableObjects);
+            
+                    // };
+            
+                    // if (_reachedObject) {
+            
+                    //     _reachedObject.reach(_bot);
+            
+                    // };
+                    
+                };
+                
             });
             
         };
+        
+        game.data.player.move();
+        game.data.player.show();
 
-        game.data.player[0].move();
-        game.data.player[0].show();
-
-        game.data.pipes.forEach((_pipe) => {
+        game.data.pipes.forEach( _pipe => {
             
             _pipe.move(game.data.xSpeed);
             _pipe.show();
         
         });
+
+        game.data.reachableObjects.forEach( _object => {
+
+            _object.move(game.data.xSpeed);
+            _object.show();
+
+        });
+
+        let _reachedObject;
+
+        if (game.data.reachableObjects.length > 0) {
+
+            _reachedObject = game.data.player.checkReachedObject(game.data.reachableObjects);
+
+        };
+
+        if (_reachedObject) {
+
+            _reachedObject.reach(game.data.player);
+
+        };
+
+        game.showPlayerLives();
         
         drawScreen.instructions();
+
+        requestAnimationFrame(gameLoop);
+
+    } else if (game.data.player.lives > 0) {
+        
+        game.data.player.lives --;
+
+        if (game.data.player.yPosition + game.data.player.height >= canvas.height) {
+
+            game.data.player.yPosition = canvas.height - game.data.player.height - 5;
+            game.data.player.jump();
+
+        } else {
+
+            game.data.pipes.shift();
+            
+        };
 
         requestAnimationFrame(gameLoop);
 
@@ -253,9 +371,23 @@ function gameLoop() {
     
             drawScreen.highScoreGameOver();
     
-        }
+        };
 
-    }
+    };
+
+};
+
+function sortInt(_upperLimit) {
+
+    if (_upperLimit) {
+
+        return Math.floor( Math.random() * _upperLimit );
+
+    } else {
+
+        return Math.round(Math.random());
+
+    };
 
 };
 
@@ -286,7 +418,7 @@ canvas.addEventListener('mousedown', (_event) => {
 
         } else if (game.data.currentScreen == 'game') {
 
-            game.data.player[0].jump();
+            game.data.player.jump();
     
         } else if (game.data.currentScreen == 'game over') {
 
