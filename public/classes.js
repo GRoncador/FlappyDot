@@ -262,7 +262,7 @@ class ObjectHeart extends ReachableObject {
         super(xCenterPosition, yCenterPosition, size);
 
         this.img = new Image();
-        this.img.src = "../img/heart.png";
+        this.img.src = "./img/heart.png";
 
     };
 
