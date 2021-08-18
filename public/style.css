@@ -61,6 +61,7 @@ p,li,h2 {
 
 h2 {
     text-align: center;
+    letter-spacing: 3px;
 }
 
 li {
@@ -70,7 +71,7 @@ li {
 
 #score-display {
     width: 800px;
-    margin: 30px auto 0px 0px;
+    margin: 35px auto 0px 5px;
 }
 
 #fps {
