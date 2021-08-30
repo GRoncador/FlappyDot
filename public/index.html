@@ -16,18 +16,12 @@
 
 </head>
 <body>
-            
-    <div id="score-display">
-        
-        <p id="score">Score: 0</p>
-        <!-- <p id="fps">FPS: 0</p> -->
-            
-    </div>
 
     <div class="page-content">
 
         <div>
-            <canvas id="canvas" width='800' height='500'></canvas>
+            <canvas id="canvas"></canvas>
+            <p>Developed by: Gustavo Roncador Borges</p>
             <input id='score-name-input' type='text' maxlength="10">
         </div>
 
@@ -49,6 +43,14 @@
 
     </div>
 
+    <script>
+        const canvas = document.getElementById('canvas');
+        canvas.width = 800;
+        canvas.height = 0.5625 * canvas.width;
+        document.documentElement.style.setProperty('--canvas-width', `${canvas.width}px`);
+        document.documentElement.style.setProperty('--canvas-height', `${canvas.height}px`);
+    </script>
+
     <script src="https://www.gstatic.com/firebasejs/8.7.1/firebase-app.js"></script>    
     <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-database.js"></script>
     <script>
@@ -69,11 +71,11 @@
 
 </body>
 
-<footer>
+<!-- <footer>
     
     <p>Developed by: Gustavo Roncador Borges</p>
     
-</footer>
+</footer> -->
 
 <script src="classes.js"></script>
 <script src="screens.js"></script>

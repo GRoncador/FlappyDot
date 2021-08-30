@@ -2,17 +2,17 @@ class Pixel {
 
     constructor(xPosition, yPosition, size, fillStyle, strokeStyle) {
 
-        this.xPosition = xPosition || 50;
-        this.yPosition = yPosition || 150;
-        this.width = size || 30;
-        this.height = size || 30;
+        this.xPosition = xPosition || (0.0625 * canvas.width); //50px in 800px canvas width
+        this.yPosition = yPosition || (0.3 * canvas.height); //135px in 450px canvas height
+        this.width = size || (0.0375 * canvas.width); //30px in 800px canvas width
+        this.height = size || (0.0375 * canvas.width); //30px in 800px canvas width
 
         this.fillStyle = fillStyle || '#ffd000';
         this.strokeStyle = strokeStyle || 'black';
     
         this.ySpeed = 0;
-        this.yAcceleration = 0.25;
-        this.jumpSpeed = -6.25;
+        this.yAcceleration = (0.000555556 * canvas.height); //0.25 in 450px canvas height
+        this.jumpSpeed = -(0.013888889 * canvas.height); //-6.25 in 450px canvas height
         this.lives = 0;
 
     };
@@ -92,10 +92,16 @@ class AI extends Pixel {
 
     constructor(topPipeSafeDistance, bottomPipeSafeDistance, clicksPerSecond, yPosition, fillStyle, strokeStyle, xPosition, size) {
 
-        super(xPosition, yPosition || 250, size, fillStyle || '#00000030', strokeStyle || '#00000040');
+        super(
+            xPosition, 
+            yPosition || (0.5 * canvas.height), 
+            size, 
+            fillStyle || '#00000030', 
+            strokeStyle || '#00000040'
+        );
         
-        this._bottomPipeSafeDistance = bottomPipeSafeDistance || 30;
-        this._topPipeSafeDistance = topPipeSafeDistance || 30;
+        this._bottomPipeSafeDistance = bottomPipeSafeDistance || this.height;
+        this._topPipeSafeDistance = topPipeSafeDistance || this.height;
         this._clicksPerSecond = clicksPerSecond || 5;
         this._lastClickTimeStamp = 0;
     
@@ -159,9 +165,9 @@ class Pipe {
     constructor(xPosition, size, transparency, yDirection, space, fillStyle, strokeStyle, yPosition) {
 
         this.height = canvas.height;
-        this.width = size * 60 || 60;
+        this.width = size * (0.075 * canvas.width) || (0.075 * canvas.width); //60px in 800px canvas width
 
-        this.space = space || 200;
+        this.space = space || (0.4 * canvas.height); //200px in 500px canvas height
         this.xPosition = xPosition || canvas.width;
         this.yPosition = yPosition || parseInt(Math.random() * (canvas.height - this.space));
 
@@ -230,8 +236,8 @@ class ReachableObject {
 
     constructor(xCenterPosition, yCenterPosition, size) {
 
-        this.width = size || 30;
-        this.height = size || 30;
+        this.width = size || (0.0375 * canvas.width); //30px in 800px canvas width
+        this.height = size || (0.0375 * canvas.width); //30px in 800px canvas width
 
         this.xCenterPosition = xCenterPosition || 0;
         this.yCenterPosition = yCenterPosition || parseInt(Math.random() * (canvas.height * 2 / 3) + canvas.height / 6);

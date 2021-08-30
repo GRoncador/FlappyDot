@@ -1,4 +1,3 @@
-const canvas = document.getElementById('canvas');
 const scoreNameInput = document.getElementById('score-name-input');
 const ctx = canvas.getContext('2d');
 const db = firebase.database();
@@ -16,11 +15,11 @@ const game = {
         
         score : 0,
         lives : 0,
-        xAcceleration : 0.001,
-        xMaxSpeed : 7,
-        xSpeed : 2,
+        xAcceleration : (0.00000125 * canvas.width), //0.001 in 800px canvas width
+        xMaxSpeed : (0.00875 * canvas.width), //7 in 800px canvas width
+        xSpeed : (0.0025 * canvas.width), //2 in 800px canvas width
     
-        distanceBetweenPairs : 400,
+        distanceBetweenPairs : (canvas.width / 2),
     
         highScoresDB : [],
         namesDB : [],
@@ -38,10 +37,12 @@ const game = {
         scoreNameInput.style.setProperty('display','none');
     
         this.data.player = new Pixel();
+        this.data.player.jump();
     
         if (this.data.mode == 'vs computer') {
     
             this.data.computerBots.push(new AI());
+            this.data.computerBots.forEach( _bot => { _bot.jump() } );
             
         };
     
@@ -113,13 +114,13 @@ const game = {
 
     showPlayerLives() {
 
-        const _heart = new ObjectHeart(12, 40, 14);
+        const _heart = new ObjectHeart((0.015 * canvas.width), (0.088888889 * canvas.height), (0.0175 * canvas.width));
 
         for (let i = 1; i <= this.data.player.lives; i++) {
 
             _heart.show();
 
-            _heart.xPosition += 24;
+            _heart.xPosition += (0.03 * canvas.width);
 
         };
 
@@ -180,8 +181,15 @@ const game = {
     updateScore() {
 
         this.data.score ++;
+        
+    },
 
-        document.getElementById('score').innerText = `Score: ${this.data.score}`;
+    showScore() {
+
+        ctx.fillStyle = 'black';    
+        ctx.textAlign = "left";
+        ctx.font = `${0.053333333 * canvas.height}px 'VT323'`;
+        ctx.fillText(`Score: ${game.data.score}`, (0.011111111 * canvas.height), (0.044444444 * canvas.height));
 
     },
 
@@ -268,7 +276,6 @@ function gameLoop() {
         game.updatePipes();
         game.updateReachableObjects();
         game.updateGameSpeed();
-        game.updateScore();
         game.fpsCalculate();
         
         if (game.data.mode == 'vs computer') {
@@ -340,6 +347,8 @@ function gameLoop() {
         };
 
         game.showPlayerLives();
+        game.updateScore();
+        game.showScore();
         
         drawScreen.instructions();
 
@@ -400,17 +409,17 @@ canvas.addEventListener('mousedown', (_event) => {
 
         if (game.data.currentScreen == 'initial') {
 
-            if (_x >= 150 && _x <= 380 && _y >= 195 && _y <= 245) {
+            if (_x >= (0.1875 * canvas.width) && _x <= (0.475 * canvas.width) && _y >= (0.39 * canvas.height) && _y <= (0.49 * canvas.height)) {
                 
                 drawScreen.activateButton('solo');
                 game.data.mode = 'solo';
                 
-            } else if (_x >= 420 && _x <= 650 && _y >= 195 && _y <= 245) {
+            } else if (_x >= (0.525 * canvas.width) && _x <= (0.8125 * canvas.width) && _y >= (0.39 * canvas.height) && _y <= (0.49 * canvas.height)) {
 
                 drawScreen.activateButton('vs computer');
                 game.data.mode = 'vs computer';
                 
-            } else if (_x >= 323 && _x <= 473 && _y >= 395 && _y <= 445) {
+            } else if (_x >= (0.40375 * canvas.width) && _x <= (0.59125 * canvas.width) && _y >= (0.79 * canvas.height) && _y <= (0.89 * canvas.height)) {
 
                 game.start();
                 
@@ -422,11 +431,11 @@ canvas.addEventListener('mousedown', (_event) => {
     
         } else if (game.data.currentScreen == 'game over') {
 
-            if (_x >= 300 && _x <= 500 && _y >= 395 && _y <= 445) {
+            if (_x >= (0.375 * canvas.width) && _x <= (0.625 * canvas.width) && _y >= (0.79 * canvas.height) && _y <= (0.89 * canvas.height)) {
                 
                 game.start();
 
-            } else if (_x >= 600 && _x <= 700 && _y >= 395 && _y <= 445) {
+            } else if (_x >= (0.75 * canvas.width) && _x <= (0.875 * canvas.width) && _y >= (0.79 * canvas.height) && _y <= (0.89 * canvas.height)) {
 
                 drawScreen.clear();
                 scoreNameInput.style.setProperty('display','none');
@@ -435,17 +444,17 @@ canvas.addEventListener('mousedown', (_event) => {
 
         } else if (game.data.currentScreen == 'game over - high score') {
 
-            if (_x >= 300 && _x <= 500 && _y >= 395 && _y <= 445) {
+            if (_x >= (0.375 * canvas.width) && _x <= (0.625 * canvas.width) && _y >= (0.79 * canvas.height) && _y <= (0.89 * canvas.height)) {
                 
                 game.start();
 
-            }  else if (_x >= 600 && _x <= 700 && _y >= 395 && _y <= 445) {
+            }  else if (_x >= (0.75 * canvas.width) && _x <= (0.875 * canvas.width) && _y >= (0.79 * canvas.height) && _y <= (0.89 * canvas.height)) {
 
                 drawScreen.clear();
                 scoreNameInput.style.setProperty('display','none');
                 drawScreen.initial();
 
-            } else if (_x >= 525 && _x <= 675 && _y >= 285 && _y <= 318) {
+            } else if (_x >= (0.65625 * canvas.width) && _x <= (0.84375 * canvas.width) && _y >= (0.57 * canvas.height) && _y <= (0.636 * canvas.height)) {
                 
                 if (scoreNameInput.value == '') {
 
